@@ -1,0 +1,215 @@
+:root {
+    --hex-width: 56px;
+    --hex-height: 64px;
+}
+body {
+    font-family: 'Malgun Gothic', sans-serif;
+    background-color: #1a1a22;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    min-height: 100vh;
+}
+.screen {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+/* 대기실 폼 스타일 */
+.auth-box {
+    background: #252532;
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
+}
+.subtitle {
+    color: #ffd700;
+    margin-top: -10px;
+    margin-bottom: 30px;
+    letter-spacing: 2px;
+}
+.input-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+.input-group label {
+    display: block;
+    font-size: 0.9rem;
+    color: #aaa;
+    margin-bottom: 8px;
+}
+.input-group input {
+    width: 100%;
+    padding: 12px;
+    background: #15151f;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    box-sizing: border-box;
+}
+.input-group input:focus {
+    border-color: #4e54c8;
+    outline: none;
+}
+
+/* 게임 레이아웃 */
+#game-container {
+    display: flex;
+    gap: 25px;
+    max-width: 1200px;
+    width: 100%;
+    margin-top: 10px;
+}
+.panel {
+    background: #252532;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+}
+#board-panel {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#status-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* 육각형 그리드 배치 핵심 연산 연출 */
+#hex-board-container {
+    padding: 30px;
+    background: #15151f;
+    border-radius: 12px;
+    margin-top: 20px;
+    overflow: auto;
+}
+#board {
+    position: relative;
+    width: 530px;  
+    height: 480px; 
+}
+
+/* 정육각형을 그리는 clip-path 기술적 구현 */
+.cell {
+    position: absolute;
+    width: var(--hex-width);
+    height: var(--hex-height);
+    background-color: #38384f;
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+    font-weight: bold;
+    font-size: 1.1rem;
+    transition: background-color 0.2s, transform 0.1s;
+}
+.cell:hover {
+    background-color: #484868;
+    transform: scale(1.05);
+    z-index: 10;
+}
+
+/* 특수 육각칸 스타일 지정 */
+.cell.center-gem {
+    background-color: #ffd700 !important;
+}
+.cell.corner-start {
+    background-color: #2b4535;
+}
+.cell.my-mine {
+    background-color: #723d46;
+}
+.cell.movable {
+    background-color: #3b5ba5;
+    animation: pulse 1.5s infinite;
+}
+
+/* 유저 토큰 말 레이아웃 (6인 대응) */
+.token {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    position: absolute;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+    z-index: 5;
+    top: 21px;
+    left: 17px;
+}
+
+/* 플레이어 카드 목록 */
+.player-badge {
+    padding: 10px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-weight: bold;
+    display: flex;
+    justify-content: space-between;
+    background: #1e1e2a;
+}
+
+/* 버튼 컴포넌트 */
+button {
+    background: #4e54c8;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 1rem;
+}
+button:hover { background: #6468ef; }
+button:disabled { background: #444; color: #888; cursor: not-allowed; }
+#setup-controls {
+    margin-bottom: 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+hr { border: 0; border-top: 1px solid #38384f; margin: 10px 0; }
+
+.log-box {
+    background: #15151f;
+    padding: 12px;
+    border-radius: 8px;
+    height: 180px;
+    overflow-y: auto;
+    font-size: 0.85rem;
+    color: #00ffcc;
+    line-height: 1.5;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.7; }
+    50% { opacity: 1; }
+    100% { opacity: 0.7; }
+}
+
+/* 피격 시 전체 화면 진동 이펙트 */
+.shake {
+    animation: shakeScreen 0.4s ease-in-out;
+}
+@keyframes shakeScreen {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}

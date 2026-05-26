@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>망각의 보석 (Oblivion Gem) - 6인용 Hex</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="auth-screen" class="screen">
+        <div class="auth-box">
+            <h2>💎 망각의 보석 💎</h2>
+            <p class="subtitle">6-Player Hexagonal Edition</p>
+            <div class="input-group">
+                <label for="user-name">팀명 / 닉네임</label>
+                <input type="text" id="user-name" placeholder="학생/팀 이름을 입력하세요">
+            </div>
+            <hr style="border-top: 1px dashed #444; margin: 20px 0;">
+            <div class="btn-row" style="display: flex; flex-direction: column; gap: 12px;">
+                <button id="btn-create-room" style="background: #2ed573;">✨ 새로운 방 만들기 (Host)</button>
+                <div style="display: flex; gap: 8px; margin-top: 5px;">
+                    <input type="text" id="room-id" placeholder="4자리 코드 입력" style="width: 60%; padding: 10px; background: #15151f; border: 2px solid #444; border-radius: 8px; color: white; text-align: center; font-weight: bold; letter-spacing: 2px;">
+                    <button id="btn-join-room" style="width: 40%; background: #4e54c8; padding: 10px;">🚪 참여하기</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="game-screen" class="screen" style="display: none;">
+        <h2>💎 망각의 보석 (Oblivion Gem) 💎</h2>
+        
+        <div id="game-container">
+            <div id="board-panel" class="panel">
+                <h3 id="turn-display">방 대기 중...</h3>
+                
+                <div id="setup-controls" style="display:none;">
+                    <span id="mine-count">지뢰 설치 필요: 5개</span>
+                    <button id="btn-random-mine">🎲 랜덤 배치</button>
+                    <button id="btn-submit-mine" disabled>제출 완료</button>
+                </div>
+                
+                <div id="hex-board-container">
+                    <div id="board"></div>
+                </div>
+            </div>
+
+            <div id="status-panel" class="panel">
+                <h3>게임 상태</h3>
+                <div id="player-list"></div>
+                <hr>
+                <h4>실시간 로그</h4>
+                <div id="log-box" class="log-box"></div>
+                <button id="btn-start-game" style="display:none;">게임 시작 (Host)</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="script.js"></script>
+</body>
+</html>

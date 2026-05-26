@@ -74,6 +74,54 @@ const authScreen = document.getElementById("auth-screen");
 const gameScreen = document.getElementById("game-screen");
 const boardEl = document.getElementById("board");
 
+// 규칙 모달 및 어드민 리셋용 돔 객체 추가 캐싱
+const btnRules = document.getElementById("btn-rules");
+const btnCloseRules = document.getElementById("btn-close-rules");
+const rulesModal = document.getElementById("rules-modal");
+const btnResetAll = document.getElementById("btn-reset-all");
+const adminPasswordInput = document.getElementById("admin-password");
+
+// --- 규칙 보기 모달 팝업 제어 이벤트 바인딩 ---
+if (btnRules && rulesModal && btnCloseRules) {
+    btnRules.addEventListener("click", () => {
+        rulesModal.style.display = "flex";
+    });
+
+    btnCloseRules.addEventListener("click", () => {
+        rulesModal.style.display = "none";
+    });
+
+    rulesModal.addEventListener("click", (e) => {
+        if (e.target === rulesModal) {
+            rulesModal.style.display = "none";
+        }
+    });
+}
+
+// --- 어드민 전체 방 리셋 및 폭파 제어 이벤트 바인딩 ---
+if (btnResetAll && adminPasswordInput) {
+    btnResetAll.addEventListener("click", async () => {
+        const password = adminPasswordInput.value.trim();
+        
+        if (password !== "reset") {
+            alert("비밀번호가 일치하지 않습니다.");
+            adminPasswordInput.value = "";
+            return;
+        }
+
+        if (confirm("🔥 정말로 진행 중인 모든 게임 방을 폭파하고 초기화하시겠습니까?\n현재 접속 중인 모든 학생들이 로비로 강제 튕겨 나갑니다.")) {
+            try {
+                // mine_jewel_rooms 하위의 모든 실시간 데이터 세트 일괄 삭제 연산
+                await set(ref(db, "mine_jewel_rooms"), null);
+                alert("시스템 초기화가 완료되었습니다. 모든 방이 정상적으로 파괴되었습니다.");
+                adminPasswordInput.value = "";
+            } catch (error) {
+                alert("리셋 연산 중 오류가 발생했습니다: " + error.message);
+            }
+        }
+    });
+}
+
 document.getElementById("btn-create-room").addEventListener("click", async () => {
     myName = document.getElementById("user-name").value.trim();
     if (!myName) return alert("닉네임을 먼저 입력해 주세요!");

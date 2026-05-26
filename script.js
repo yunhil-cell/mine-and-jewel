@@ -81,10 +81,10 @@ document.getElementById("btn-create-room").addEventListener("click", async () =>
     let uniqueIdFound = false;
     let generatedCode = "";
 
-    // 1000 ~ 9999 사이 중복되지 않는 방 코드가 나올 때까지 DB 검증 수행
+    // 1000 ~ 9999 사이 중복되지 않는 방 코드가 나올 때까지 DB 검증 수행 (배틀쉽과의 격리를 위해 전용 경로 mine_jewel_rooms 사용)
     while (!uniqueIdFound) {
         generatedCode = Math.floor(1000 + Math.random() * 9000).toString();
-        const roomRef = ref(db, `rooms/${generatedCode}`);
+        const roomRef = ref(db, `mine_jewel_rooms/${generatedCode}`);
         const snapshot = await get(roomRef);
         if (!snapshot.exists()) {
             uniqueIdFound = true;
@@ -105,7 +105,7 @@ document.getElementById("btn-create-room").addEventListener("click", async () =>
         }
     };
 
-    await set(ref(db, `rooms/${roomId}`), roomData);
+    await set(ref(db, `mine_jewel_rooms/${roomId}`), roomData);
     
     alert(`방이 개설되었습니다! 방 코드 [ ${roomId} ]를 팀원들에게 공유하세요.`);
     enterGameScreen();
@@ -118,7 +118,7 @@ document.getElementById("btn-join-room").addEventListener("click", async () => {
 
     if (!roomId || !myName) return alert("닉네임과 4자리 방 코드를 모두 입력해 주세요!");
 
-    const roomRef = ref(db, `rooms/${roomId}`);
+    const roomRef = ref(db, `mine_jewel_rooms/${roomId}`);
     const snapshot = await get(roomRef);
     
     if (!snapshot.exists()) return alert("존재하지 않는 방 코드입니다. 코드를 다시 확인하세요.");
@@ -137,21 +137,33 @@ document.getElementById("btn-join-room").addEventListener("click", async () => {
         isReady: false
     };
 
-    await update(ref(db, `rooms/${roomId}/players/${myUid}`), playerInfo);
+    await update(ref(db, `mine_jewel_rooms/${roomId}/players/${myUid}`), playerInfo);
     enterGameScreen();
 });
 
-// 화면 전환 및 동기화 활성화 공통 함수
+// 화면 전환 및 동기화 활성화 공통 함수 (대기실 방 코드 상시 노출 처리 연계)
 function enterGameScreen() {
+    const lobbyDisplay = document.getElementById("lobby-room-display");
+    const lobbyCodeText = document.getElementById("current-lobby-code");
+    if (lobbyDisplay && lobbyCodeText) {
+        lobbyCodeText.innerText = roomId;
+        lobbyDisplay.style.display = "block";
+    }
+
     authScreen.style.display = "none";
     gameScreen.style.display = "flex";
     initRealtimeSync();
 }
 
-// --- 2. 실시간 파이어베이스 연동 리스너 활성화 ---
+// --- 2. 실시간 파이어베이스 연동 리스너 활성화 (전용 경로인 mine_jewel_rooms 구독) ---
 function initRealtimeSync() {
-    onValue(ref(db, `rooms/${roomId}`), (snapshot) => {
-        if (!snapshot.exists()) return;
+    onValue(ref(db, `mine_jewel_rooms/${roomId}`), (snapshot) => {
+        // 호스트에 의해 방이 파괴(remove)되었을 경우 모든 클라이언트 초기화 및 새로고침
+        if (!snapshot.exists()) {
+            alert("방이 종료되어 로비로 리다이렉트됩니다.");
+            window.location.reload();
+            return;
+        }
         gameState = snapshot.val();
 
         renderHexBoard();
@@ -181,7 +193,7 @@ function initRealtimeSync() {
 
             const allReady = Object.values(gameState.players).every(p => p.isReady);
             if (allReady && gameState.host === myUid) {
-                update(ref(db, `rooms/${roomId}`), { status: "playing" });
+                update(ref(db, `mine_jewel_rooms/${roomId}`), { status: "playing" });
             }
         }
 
@@ -199,8 +211,22 @@ function initRealtimeSync() {
             }
         }
 
+        // 결과 노출 후 5초 뒤 자동 방 파괴(remove) 시퀀스 작동
         if (gameState.status === "finished") {
             document.getElementById("turn-display").innerText = "🚨 게임 종료! 승리팀이 결정되었습니다.";
+            
+            const logBox = document.getElementById("log-box");
+            if (logBox && logBox.innerHTML.indexOf("5초 후 방이 폭파") === -1) {
+                logBox.innerHTML += `<div style="color:#ff4d4d; font-weight:bold;">[시스템] 5초 후 방이 자동으로 폭파되며 로비로 복귀합니다.</div>`;
+                logBox.scrollTop = logBox.scrollHeight;
+            }
+
+            // 호스트 플레이어가 대표로 5초 후 서버 데이터를 원격 삭제
+            if (gameState.host === myUid) {
+                setTimeout(() => {
+                    set(ref(db, `mine_jewel_rooms/${roomId}`), null);
+                }, 5000);
+            }
         }
     });
 }
@@ -334,18 +360,18 @@ document.getElementById("btn-random-mine").addEventListener("click", () => {
     document.getElementById("btn-submit-mine").disabled = false;
 });
 
-// 지뢰 제출하기 최종 확정
+// 지뢰 제출하기 최종 확정 (mine_jewel_rooms 대응)
 document.getElementById("btn-submit-mine").addEventListener("click", () => {
     myMines.forEach(coord => {
-        update(ref(db, `rooms/${roomId}/mines/${coord}`), { [myUid]: true });
+        update(ref(db, `mine_jewel_rooms/${roomId}/mines/${coord}`), { [myUid]: true });
     });
-    update(ref(db, `rooms/${roomId}/players/${myUid}`), { isReady: true });
+    update(ref(db, `mine_jewel_rooms/${roomId}/players/${myUid}`), { isReady: true });
     document.getElementById("setup-controls").style.display = "none";
 });
 
-// --- 6. 호스트의 게임 셔플 스타트 액션 (인원수 맞춤 스타트) ---
+// --- 6. 호스트의 게임 셔플 스타트 액션 (mine_jewel_rooms 대응) ---
 document.getElementById("btn-start-game").addEventListener("click", async () => {
-    const roomRef = ref(db, `rooms/${roomId}`);
+    const roomRef = ref(db, `mine_jewel_rooms/${roomId}`);
     const snapshot = await get(roomRef);
     if (!snapshot.exists()) return;
 
@@ -373,9 +399,9 @@ document.getElementById("btn-start-game").addEventListener("click", async () => 
     });
 });
 
-// --- 7. 서버 경유 동기화 기반 이동 프로세서 ---
+// --- 7. 서버 경유 동기화 기반 이동 프로세서 (mine_jewel_rooms 대응) ---
 async function executeHexMove(tr, tc) {
-    const roomRef = ref(db, `rooms/${roomId}`);
+    const roomRef = ref(db, `mine_jewel_rooms/${roomId}`);
     const coord = `${tr},${tc}`;
 
     if (tr === 4 && tc === 4) {
@@ -390,7 +416,7 @@ async function executeHexMove(tr, tc) {
         return;
     }
 
-    const mineSnap = await get(ref(db, `rooms/${roomId}/mines/${coord}`));
+    const mineSnap = await get(ref(db, `mine_jewel_rooms/${roomId}/mines/${coord}`));
     const isExploded = gameState.explodedMines && gameState.explodedMines[coord];
 
     if (mineSnap.exists() && !isExploded) {

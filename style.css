@@ -118,6 +118,10 @@ body {
     transform-origin: center center;
     /* vmin 단위를 결합하여 가로세로 중 최소 비율에 맞춰 화면 깨짐 없이 동적 축소 */
     transform: scale(calc(min(70vw, 55vh) / 510));
+    /* 보드판 외곽 틀 자체를 거대한 정육각형 형태로 마스킹 처리 */
+    clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+    background-color: #2b2b3d;
+    padding: 10px;
 }
 
 /* 정육각형을 그리는 clip-path 기술적 구현 */

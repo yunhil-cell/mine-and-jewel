@@ -355,17 +355,21 @@ function handleHexClick(r, c) {
         });
         if (isNearStart) return alert("플레이어들의 대칭 출발점 반경 1칸 안에는 지뢰를 깔 수 없습니다!");
 
+        // 동적 인원별 지뢰 개수 매핑 테이블 (2인:12개, 3인:9개, 4인:7개, 5인:5개, 6인:4개)
+        const maxMineMap = { 2: 12, 3: 9, 4: 7, 5: 5, 6: 4 };
+        const requiredMines = maxMineMap[totalCount] || 5;
+
         const idx = myMines.indexOf(coord);
         if (idx > -1) {
             myMines.splice(idx, 1);
         } else {
-            if (myMines.length >= 5) return alert("지뢰는 최대 5개까지만 깔 수 있습니다.");
+            if (myMines.length >= requiredMines) return alert(`현재 인원 모드에서 지뢰는 최대 ${requiredMines}개까지만 깔 수 있습니다.`);
             myMines.push(coord);
         }
         renderHexBoard();
-        document.getElementById("mine-count").innerText = `지뢰 설치 필요: ${5 - myMines.length}개`;
-        document.getElementById("btn-submit-mine").disabled = myMines.length !== 5;
-    } 
+        document.getElementById("mine-count").innerText = `지뢰 설치 필요: ${requiredMines - myMines.length}개`;
+        document.getElementById("btn-submit-mine").disabled = myMines.length !== requiredMines;
+    }
     
     else if (gameState.status === "playing") {
         if (gameState.turnOrder[gameState.currentTurnIdx] !== myUid) return;
@@ -388,8 +392,11 @@ document.getElementById("btn-random-mine").addEventListener("click", () => {
     myMines = [];
     const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
     const activeSpawns = getSpawnPositions(totalCount);
+    
+    const maxMineMap = { 2: 12, 3: 9, 4: 7, 5: 5, 6: 4 };
+    const requiredMines = maxMineMap[totalCount] || 5;
 
-    while (myMines.length < 5) {
+    while (myMines.length < requiredMines) {
         const r = Math.floor(Math.random() * 9);
         const c = Math.floor(Math.random() * 9);
         
@@ -410,6 +417,12 @@ document.getElementById("btn-random-mine").addEventListener("click", () => {
 
 // 지뢰 제출하기 최종 확정 (mine_jewel_rooms 대응)
 document.getElementById("btn-submit-mine").addEventListener("click", () => {
+    const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
+    const maxMineMap = { 2: 12, 3: 9, 4: 7, 5: 5, 6: 4 };
+    const requiredMines = maxMineMap[totalCount] || 5;
+
+    if (myMines.length !== requiredMines) return alert(`지뢰를 정확히 ${requiredMines}개 배치해야 합니다.`);
+
     myMines.forEach(coord => {
         update(ref(db, `mine_jewel_rooms/${roomId}/mines/${coord}`), { [myUid]: true });
     });

@@ -14,12 +14,15 @@ body {
     min-height: 100vh;
 }
 .screen {
-    width: 100%;
+    width: 100vw;
+    height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 20px;
+    justify-content: center;
+    padding: 10px;
     box-sizing: border-box;
+    overflow: hidden;
 }
 
 /* 대기실 폼 스타일 */
@@ -63,45 +66,58 @@ body {
     outline: none;
 }
 
-/* 게임 레이아웃 */
+/* 태블릿 상하좌우 스케일 맞춤형 반응형 게임 레이아웃 */
 #game-container {
     display: flex;
-    gap: 25px;
-    max-width: 1200px;
+    gap: 20px;
     width: 100%;
-    margin-top: 10px;
+    height: 150%;
+    max-width: 95vw;
+    max-height: 85vh;
+    box-sizing: border-box;
 }
 .panel {
     background: #252532;
-    padding: 25px;
+    padding: 20px;
     border-radius: 16px;
     box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+    box-sizing: border-box;
 }
 #board-panel {
     flex: 2;
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
+    height: 100%;
 }
 #status-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 15px;
+    height: 100%;
 }
 
-/* 육각형 그리드 배치 핵심 연산 연출 */
+/* 육각형 보드판의 화면 압축 비율 유지 컨테이너 */
 #hex-board-container {
-    padding: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
     background: #15151f;
     border-radius: 12px;
-    margin-top: 20px;
-    overflow: auto;
+    overflow: hidden;
+    position: relative;
 }
 #board {
     position: relative;
     width: 530px;  
-    height: 480px; 
+    height: 480px;
+    transform-origin: center center;
+    /* vmin 단위를 결합하여 가로세로 중 최소 비율에 맞춰 화면 깨짐 없이 동적 축소 */
+    transform: scale(calc(min(70vw, 55vh) / 510));
 }
 
 /* 정육각형을 그리는 clip-path 기술적 구현 */

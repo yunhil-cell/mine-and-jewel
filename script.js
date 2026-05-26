@@ -24,47 +24,20 @@ let myName = "";
 let myMines = [];
 let gameState = {};
 
-// 6인용 고유 컬러 설정 테이블
-const playerColors = ["#ff4d4d", "#1e90ff", "#2ed573", "#ffa500", "#e056fd", "#1dd1a1"];
+// 2~4인용 고유 컬러 설정 테이블
+const playerColors = ["#ff4d4d", "#1e90ff", "#2ed573", "#ffa500"];
 
-// 육각 격자(9x9) 상에서의 외곽 6개 마스터 꼭짓점 정의
-const hexVertices = [
-    { r: 0, c: 4 }, // 0: 북쪽 꼭짓점
-    { r: 2, c: 8 }, // 1: 북동쪽 꼭짓점
-    { r: 6, c: 8 }, // 2: 남동쪽 꼭짓점
-    { r: 8, c: 4 }, // 3: 남쪽 꼭짓점
-    { r: 6, c: 0 }, // 4: 남서쪽 꼭짓점
-    { r: 2, c: 0 }  // 5: 북서쪽 꼭짓점
-];
-
-// 기획 사양에 맞춘 인원별 수학적 대칭 시작점 테이블 반환 함수
+// 사각형 격자(9x9) 기준 인원별 대칭 사각 꼭짓점 반환 함수 (2인: 마주보기, 3인: 삼각, 4인: 네 모퉁이)
 function getSpawnPositions(totalPlayers) {
-    const positions = [];
-    if (totalPlayers === 2) {
-        // 2명: 완벽한 정반대편 마주보기 (북 vs 남)
-        positions.push(hexVertices[0]);
-        positions.push(hexVertices[3]);
-    } else if (totalPlayers === 3) {
-        // 3명: 삼각형 배치 (북, 남동, 남서)
-        positions.push(hexVertices[0]);
-        positions.push(hexVertices[2]);
-        positions.push(hexVertices[4]);
-    } else if (totalPlayers === 4) {
-        // 4명: 사각형 배치 (북동, 남동, 남서, 북서)
-        positions.push(hexVertices[1]);
-        positions.push(hexVertices[2]);
-        positions.push(hexVertices[4]);
-        positions.push(hexVertices[5]);
-    } else if (totalPlayers === 5) {
-        // 5명: 6인 위치에서 한 자리(북서쪽 5번 인덱스)만 비우고 시계방향 배치
-        for (let i = 0; i < 5; i++) {
-            positions.push(hexVertices[i]);
-        }
-    } else if (totalPlayers === 6) {
-        // 6명: 모든 6개 꼭짓점 풀 배치
-        for (let i = 0; i < 6; i++) {
-            positions.push(hexVertices[i]);
-        }
+    const positions = [
+        { r: 0, c: 0 }, // P1: 좌상단 고정
+        { r: 8, c: 8 }  // P2: 우하단 고정 (마주보기 구성)
+    ];
+    if (totalPlayers >= 3) {
+        positions.push({ r: 0, c: 8 }); // P3: 우상단 추가
+    }
+    if (totalPlayers >= 4) {
+        positions.push({ r: 8, c: 0 }); // P4: 좌하단 추가
     }
     return positions;
 }
@@ -175,7 +148,7 @@ document.getElementById("btn-join-room").addEventListener("click", async () => {
     if (roomData.status !== "waiting") return alert("이미 게임이 진행 중이거나 종료된 방입니다.");
 
     const currentPlayers = roomData.players ? Object.keys(roomData.players) : [];
-    if (currentPlayers.length >= 6) return alert("방 정원(6명)이 초과되어 입장할 수 없습니다.");
+    if (currentPlayers.length >= 4) return alert("방 정원(4명)이 초과되어 입장할 수 없습니다.");
 
     // 순서대로 고유 컬러 배정
     const colorIdx = currentPlayers.length;
@@ -218,22 +191,27 @@ function initRealtimeSync() {
         renderStatusPanel();
         renderGameLogs();
 
-        // 호스트 권한 스타트 버튼 제어 (최대 6명 가능)
+        // 호스트 권한 스타트 버튼 제어 (최대 4인 변경 반영)
         if (gameState.status === "waiting") {
             if (gameState.host === myUid) {
                 document.getElementById("btn-start-game").style.display = "block";
             }
-            document.getElementById("turn-display").innerText = `팀 대기 중 (${Object.keys(gameState.players).length}/6명)...`;
+            document.getElementById("turn-display").innerText = `팀 대기 중 (${Object.keys(gameState.players).length}/4명)...`;
         } else {
             document.getElementById("btn-start-game").style.display = "none";
         }
 
-        // 지뢰 설치 셋업 단계 전환 핸들링
+        // 지뢰 설치 셋업 단계 전환 핸들링 (인원수 기반 지뢰 레이블 동적 치환 버그 수정)
         if (gameState.status === "setup") {
             const me = gameState.players[myUid];
+            const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
+            const maxMineMap = { 2: 12, 3: 9, 4: 7 };
+            const requiredMines = maxMineMap[totalCount] || 7;
+
             if (me && !me.isReady) {
                 document.getElementById("setup-controls").style.display = "flex";
-                document.getElementById("turn-display").innerText = "출발점을 제외하고 지뢰 5개를 배치하세요.";
+                document.getElementById("mine-count").innerText = `지뢰 설치 필요: ${requiredMines - myMines.length}개`;
+                document.getElementById("turn-display").innerText = `출발점을 제외하고 지뢰 ${requiredMines}개를 배치하세요.`;
             } else {
                 document.getElementById("setup-controls").style.display = "none";
                 document.getElementById("turn-display").innerText = "다른 팀이 지뢰를 배치하고 있습니다...";
@@ -245,13 +223,14 @@ function initRealtimeSync() {
             }
         }
 
-        // 실시간 턴 배정 보드 모드 처리
+        // 실시간 턴 배정 보드 모드 처리 (사각 그리드 이동 가이드 연결)
         if (gameState.status === "playing") {
             document.getElementById("setup-controls").style.display = "none";
             const currentTurnUid = gameState.turnOrder[gameState.currentTurnIdx];
             
             if (currentTurnUid === myUid) {
-                document.getElementById("turn-display").innerText = "★ 당신의 턴입니다! 인접한 육각 칸으로 전진하세요.";
+                document.getElementById("turn-display").innerText = "★ 당신의 턴입니다! 인접한 사각 격자 칸으로 전진하세요.";
+                // 정의된 함수명과 정확히 일치하도록 싱크 수정
                 highlightMovableHexagons();
             } else {
                 const activeName = gameState.players[currentTurnUid]?.name || "상대방";
@@ -269,7 +248,6 @@ function initRealtimeSync() {
                 logBox.scrollTop = logBox.scrollHeight;
             }
 
-            // 호스트 플레이어가 대표로 5초 후 서버 데이터를 원격 삭제
             if (gameState.host === myUid) {
                 setTimeout(() => {
                     set(ref(db, `mine_jewel_rooms/${roomId}`), null);
@@ -279,11 +257,16 @@ function initRealtimeSync() {
     });
 }
 
-// --- 3. 육각형 맵 연산 구조 기반 동적 렌더링 ---
+// --- 3. 사각형 9x9 그리드 기반 동적 보드 렌더링 ---
 function renderHexBoard() {
     boardEl.innerHTML = "";
     const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
     const activeSpawns = getSpawnPositions(totalCount);
+
+    boardEl.style.display = "grid";
+    boardEl.style.gridTemplateColumns = "repeat(9, 1fr)";
+    boardEl.style.gridTemplateRows = "repeat(9, 1fr)";
+    boardEl.style.gap = "4px";
 
     for (let r = 0; r < 9; r++) {
         for (let c = 0; c < 9; c++) {
@@ -292,28 +275,26 @@ function renderHexBoard() {
             cell.dataset.r = r;
             cell.dataset.c = c;
 
-            // 홀수 행은 우측으로 가로 폭의 반(28px)만큼 오프셋 이동 마진을 줌
-            const xOffset = r % 2 === 1 ? 28 : 0;
-            const leftPos = c * 58 + xOffset;
-            const topPos = r * 46; 
+            cell.style.position = "relative";
+            cell.style.left = "0px";
+            cell.style.top = "0px";
+            cell.style.width = "100%";
+            cell.style.height = "100%";
+            cell.style.aspectRatio = "1";
+            cell.style.clipPath = "none"; 
 
-            cell.style.left = `${leftPos}px`;
-            cell.style.top = `${topPos}px`;
-
-            // 중앙 보석 조건 처리
             if (r === 4 && c === 4) {
                 cell.classList.add("center-gem");
                 cell.innerText = "💎";
             }
 
-            // 이번 매치 인원수 기획 기준 활성화된 리스폰 시작점 타일 강조
             activeSpawns.forEach(spawn => {
                 if (spawn.r === r && spawn.c === c) cell.classList.add("corner-start");
             });
 
-            // 내가 직접 설치 진행 중인 지뢰 하이라이트
             if (myMines.includes(`${r},${c}`)) cell.classList.add("my-mine");
 
+            // 클릭 핸들러 명칭을 실제 존재하는 handleHexClick으로 유지
             cell.addEventListener("click", () => handleHexClick(r, c));
             boardEl.appendChild(cell);
         }
@@ -322,42 +303,41 @@ function renderHexBoard() {
     injectTokensAndHints();
 }
 
-// --- 4. 정육각형(Hex) Offset 기준 인접 6칸 연산 알고리즘 ---
+// --- 4. 사각형 그리드 대각선 포함 인접 8칸 정밀 수리 알고리즘 ---
 function getNeighbors(r, c) {
     const neighbors = [];
-    const offsets = (r % 2 === 1) ? 
-        [ {dr:-1, dc:0}, {dr:-1, dc:1}, {dr:0, dc:-1}, {dr:0, dc:1}, {dr:1, dc:0}, {dr:1, dc:1} ] : 
-        [ {dr:-1, dc:-1}, {dr:-1, dc:0}, {dr:0, dc:-1}, {dr:0, dc:1}, {dr:1, dc:-1}, {dr:1, dc:0} ]; 
-
-    offsets.forEach(off => {
-        const nr = r + off.dr;
-        const nc = c + off.dc;
-        if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
-            neighbors.push({ r: nr, c: nc });
+    for (let dr = -1; dr <= 1; dr++) {
+        for (let dc = -1; dc <= 1; dc++) {
+            if (dr === 0 && dc === 0) continue;
+            const nr = r + dr;
+            const nc = c + dc;
+            if (nr >= 0 && nr < 9 && nc >= 0 && nc < 9) {
+                neighbors.push({ r: nr, c: nc });
+            }
         }
-    });
+    }
     return neighbors;
 }
 
-// --- 5. 육각 타일 클릭 이벤트 제어 ---
+// --- 5. 사각형 타일 클릭 이벤트 제어 및 UI 연동 ---
 function handleHexClick(r, c) {
     const coord = `${r},${c}`;
     const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
     const activeSpawns = getSpawnPositions(totalCount);
+    
+    // 2~4인용 사각 맞춤형 지뢰 맵 규칙 적용 및 버그 수정
+    const maxMineMap = { 2: 12, 3: 9, 4: 7 };
+    const requiredMines = maxMineMap[totalCount] || 7;
 
     if (gameState.status === "setup") {
         if (r === 4 && c === 4) return alert("보석 칸에는 지뢰 매설이 금지됩니다!");
         
-        // 현재 인원 구성상 배정된 모든 유저의 출발역 주변 배치 보호막 작동
+        // 사각형 직교 격자 반경 1칸(대각선 포함) 수학적 충돌 계산 적용
         let isNearStart = false;
         activeSpawns.forEach(spawn => {
             if (Math.abs(spawn.r - r) <= 1 && Math.abs(spawn.c - c) <= 1) isNearStart = true;
         });
         if (isNearStart) return alert("플레이어들의 대칭 출발점 반경 1칸 안에는 지뢰를 깔 수 없습니다!");
-
-        // 동적 인원별 지뢰 개수 매핑 테이블 (2인:12개, 3인:9개, 4인:7개, 5인:5개, 6인:4개)
-        const maxMineMap = { 2: 12, 3: 9, 4: 7, 5: 5, 6: 4 };
-        const requiredMines = maxMineMap[totalCount] || 5;
 
         const idx = myMines.indexOf(coord);
         if (idx > -1) {
@@ -369,7 +349,7 @@ function handleHexClick(r, c) {
         renderHexBoard();
         document.getElementById("mine-count").innerText = `지뢰 설치 필요: ${requiredMines - myMines.length}개`;
         document.getElementById("btn-submit-mine").disabled = myMines.length !== requiredMines;
-    }
+    } 
     
     else if (gameState.status === "playing") {
         if (gameState.turnOrder[gameState.currentTurnIdx] !== myUid) return;
@@ -393,8 +373,8 @@ document.getElementById("btn-random-mine").addEventListener("click", () => {
     const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
     const activeSpawns = getSpawnPositions(totalCount);
     
-    const maxMineMap = { 2: 12, 3: 9, 4: 7, 5: 5, 6: 4 };
-    const requiredMines = maxMineMap[totalCount] || 5;
+    const maxMineMap = { 2: 12, 3: 9, 4: 7 };
+    const requiredMines = maxMineMap[totalCount] || 7;
 
     while (myMines.length < requiredMines) {
         const r = Math.floor(Math.random() * 9);
@@ -411,15 +391,15 @@ document.getElementById("btn-random-mine").addEventListener("click", () => {
         }
     }
     renderHexBoard();
-    document.getElementById("mine-count").innerText = `지뢰 설치 필요: 0개`;
+    document.getElementById("mine-count").innerText = "지뢰 설치 필요: 0개";
     document.getElementById("btn-submit-mine").disabled = false;
 });
 
 // 지뢰 제출하기 최종 확정 (mine_jewel_rooms 대응)
 document.getElementById("btn-submit-mine").addEventListener("click", () => {
     const totalCount = gameState.turnOrder ? gameState.turnOrder.length : 2;
-    const maxMineMap = { 2: 12, 3: 9, 4: 7, 5: 5, 6: 4 };
-    const requiredMines = maxMineMap[totalCount] || 5;
+    const maxMineMap = { 2: 12, 3: 9, 4: 7 };
+    const requiredMines = maxMineMap[totalCount] || 7;
 
     if (myMines.length !== requiredMines) return alert(`지뢰를 정확히 ${requiredMines}개 배치해야 합니다.`);
 
@@ -438,6 +418,7 @@ document.getElementById("btn-start-game").addEventListener("click", async () => 
 
     const uids = Object.keys(snapshot.val().players);
     if (uids.length < 2) return alert("최소 2명 이상 입장해야 시작할 수 있습니다.");
+    if (uids.length > 4) return alert("최대 인원(4명)을 초과했습니다.");
 
     // 무작위 순서 셔플
     for (let i = uids.length - 1; i > 0; i--) {
@@ -515,6 +496,11 @@ function injectTokensAndHints() {
         const token = document.createElement("div");
         token.classList.add("token");
         token.style.backgroundColor = gameState.players[uid]?.color || "#fff";
+        // 사각형 격자 정중앙에 토큰 배치되도록 위치 보정 스타일 부여
+        token.style.position = "absolute";
+        token.style.top = "50%";
+        token.style.left = "50%";
+        token.style.transform = "translate(-50%, -50%)";
 
         const cell = document.querySelector(`.cell[data-r='${pos.r}'][data-c='${pos.c}']`);
         if (cell) cell.appendChild(token);

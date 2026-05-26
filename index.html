@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>망각의 보석 (Oblivion Gem) - 6인용 Hex</title>
+    <title>망각의 보석 (Oblivion Gem) - 2~4인용 사각 그리드</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
     <div id="auth-screen" class="screen">
         <div class="auth-box">
             <h2>💎 망각의 보석 💎</h2>
-            <p class="subtitle">6-Player Hexagonal Edition</p>
+            <p class="subtitle">2~4 Player Square Grid Edition</p>
             <div id="lobby-room-display" style="display: none; background: #15151f; padding: 10px; border-radius: 8px; margin-top: -15px; margin-bottom: 20px; border: 1px solid #4e54c8;">
                 <span style="color: #aaa; font-size: 0.85rem;">현재 입장한 방 코드</span>
                 <div id="current-lobby-code" style="color: #00ffcc; font-size: 1.4rem; font-weight: bold; letter-spacing: 2px; margin-top: 2px;">0000</div>
@@ -45,22 +45,22 @@
             <div style="margin: 20px 0; max-height: 55vh; overflow-y: auto; font-size: 0.95rem; line-height: 1.6; padding-right: 5px;">
                 <p style="margin: 0 0 8px 0; color: #00ffcc; font-weight: bold;">1. 게임 개요 및 인원 배치</p>
                 <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #ccc;">
-                    <li>최소 2인부터 최대 6인까지 함께 즐기는 육각형 보드게임입니다.</li>
-                    <li>시작 시 인원수에 따라 수학적으로 완벽한 대칭 위치에 자동 리스폰됩니다.</li>
+                    <li>최소 2인부터 최대 4인까지 함께 즐기는 사각형 그리드 보드게임입니다.</li>
+                    <li>시작 시 인원수에 따라 사각형 9x9 공간의 각 모퉁이 대칭 위치에 자동 배치됩니다.</li>
                 </ul>
-                <p style="margin: 0 0 8px 0; color: #00ffcc; font-weight: bold;">2. 지뢰 비공개 설치 (인당 5개)</p>
+                <p style="margin: 0 0 8px 0; color: #00ffcc; font-weight: bold;">2. 지뢰 비공개 설치 (인원별 차등 설계)</p>
                 <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #ccc;">
-                    <li>게임 시작 직후, 본인이 원하는 구역에 5개의 지뢰를 비밀리에 설치합니다.</li>
-                    <li>모든 팀의 출발지 주변 1칸 및 중앙 보석 칸에는 지뢰를 매설할 수 없습니다.</li>
-                    <li>귀찮을 경우 <strong>[🎲 랜덤 배치]</strong> 버튼으로 신속하게 준비할 수 있습니다.</li>
+                    <li>게임 시작 후, 인원수에 맞춰 지뢰를 비밀리에 설치합니다. (2인: 12개 / 3인: 9개 / 4인: 7개)</li>
+                    <li>모든 팀의 출발 모퉁이 기지 주변 1칸 및 중앙 보석 칸에는 지뢰를 매설할 수 없습니다.</li>
+                    <li><strong>[🎲 랜덤 배치]</strong> 버튼을 사용하여 빠르게 자동 세팅을 완료할 수 있습니다.</li>
                 </ul>
-                <p style="margin: 0 0 8px 0; color: #00ffcc; font-weight: bold;">3. 이동 및 승리 조건 (블러핑 없음)</p>
+                <p style="margin: 0 0 8px 0; color: #00ffcc; font-weight: bold;">3. 이동 및 승리 조건</p>
                 <ul style="margin: 0 0 15px 0; padding-left: 20px; color: #ccc;">
-                    <li>무작위로 정해진 순서에 따라 본인 턴에 인접한 육각 칸 6방향 중 1칸으로 이동합니다.</li>
-                    <li>이동한 발판에는 **내 위치 주변 6방향에 묻힌 실시간 남은 지뢰 총 개수**가 숫자로 표시됩니다.</li>
-                    <li>상대방이 서 있는 칸으로는 진입할 수 없습니다.</li>
-                    <li>지뢰를 밟으면 💥쾅 소리와 함께 <strong>자신의 출발지 기지로 강제 소환</strong>됩니다.</li>
-                    <li>지뢰를 피해 <strong>정중앙 (5,5) 칸의 💎보석을 가장 먼저 선점하는 팀이 즉시 승리</strong>합니다.</li>
+                    <li>무작위로 정해진 셔플 순서에 따라 본인 턴에 인접한 상하좌우 및 대각선을 포함한 <strong>8방향 중 1칸</strong>으로 이동합니다.</li>
+                    <li>이동한 발판에는 <strong>내 위치 주변 인접한 8방향에 매설된 실시간 남은 지뢰의 총합</strong>이 숫자로 표시됩니다.</li>
+                    <li>다른 팀 플레이어가 이미 딛고 서 있는 사각 칸으로는 진입이 불가능합니다.</li>
+                    <li>상대방 지뢰를 밟으면 폭발 이펙트와 함께 <strong>자신의 고유 모퉁이 시작 기지로 강제 소환</strong>됩니다.</li>
+                    <li>지뢰망을 피해 <strong>정중앙 (4,4) 칸에 위치한 💎보석을 가장 먼저 선점하는 팀이 최종 승리</strong>합니다.</li>
                 </ul>
             </div>
             <button id="btn-close-rules" style="width: 100%; background: #ff4d4d; color: white; padding: 12px; border: none; border-radius: 8px; font-weight: bold; font-size: 1rem; cursor: pointer;">닫기</button>
@@ -75,13 +75,13 @@
                 <h3 id="turn-display">방 대기 중...</h3>
                 
                 <div id="setup-controls" style="display:none;">
-                    <span id="mine-count">지뢰 설치 필요: 5개</span>
+                    <span id="mine-count">지뢰 설치 계산 중...</span>
                     <button id="btn-random-mine">🎲 랜덤 배치</button>
                     <button id="btn-submit-mine" disabled>제출 완료</button>
                 </div>
                 
-                <div id="hex-board-container">
-                    <div id="board"></div>
+                <div id="hex-board-container" style="padding: 15px; background: #15151f; border-radius: 12px; margin-top: 20px; width: 100%; box-sizing: border-box;">
+                    <div id="board" style="clip-path: none !important; background: transparent !important;"></div>
                 </div>
             </div>
 
